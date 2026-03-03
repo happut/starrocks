@@ -5221,11 +5221,25 @@ public class AstBuilder extends com.starrocks.sql.parser.StarRocksBaseVisitor<Pa
     @Override
     public ParseNode visitAddPartitionClause(com.starrocks.sql.parser.StarRocksParser.AddPartitionClauseContext context) {
         boolean temporary = context.TEMPORARY() != null;
+        boolean ifNotExists = false;
         PartitionDesc partitionDesc = null;
         if (context.singleRangePartition() != null) {
             partitionDesc = (PartitionDesc) visitSingleRangePartition(context.singleRangePartition());
         } else if (context.multiRangePartition() != null) {
-            partitionDesc = (PartitionDesc) visitMultiRangePartition(context.multiRangePartition());
+            // Check for IF NOT EXISTS in multiRangePartition context
+            if (context.EXISTS() != null) {
+                ifNotExists = true;
+            }
+            MultiRangePartitionDesc multiRangePartitionDesc = (MultiRangePartitionDesc) visitMultiRangePartition(context.multiRangePartition());
+            // Create a new MultiRangePartitionDesc with IF NOT EXISTS flag
+            partitionDesc = new MultiRangePartitionDesc(
+                multiRangePartitionDesc.getPartitionBegin(),
+                multiRangePartitionDesc.getPartitionEnd(),
+                multiRangePartitionDesc.getStep(),
+                multiRangePartitionDesc.getTimeUnit(),
+                ifNotExists,
+                multiRangePartitionDesc.getPos()
+            );
         } else if (context.singleItemListPartitionDesc() != null) {
             partitionDesc = (PartitionDesc) visitSingleItemListPartitionDesc(context.singleItemListPartitionDesc());
         } else if (context.multiItemListPartitionDesc() != null) {

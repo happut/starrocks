@@ -50,6 +50,7 @@ public class MultiRangePartitionDesc extends PartitionDesc {
     private final String partitionEnd;
     private Long step;
     private final String timeUnit;
+    private final boolean ifNotExists;
     private static final SimpleDateFormat DATEKEY_SDF = new SimpleDateFormat("yyyyMMdd");
     public static final ImmutableSet<TimestampArithmeticExpr.TimeUnit> SUPPORTED_TIME_UNIT_TYPE = ImmutableSet.of(
             TimestampArithmeticExpr.TimeUnit.HOUR,
@@ -61,11 +62,17 @@ public class MultiRangePartitionDesc extends PartitionDesc {
 
     public MultiRangePartitionDesc(String partitionBegin, String partitionEnd, Long step,
                                    String timeUnit, NodePosition pos) {
+        this(partitionBegin, partitionEnd, step, timeUnit, false, pos);
+    }
+
+    public MultiRangePartitionDesc(String partitionBegin, String partitionEnd, Long step,
+                                   String timeUnit, boolean ifNotExists, NodePosition pos) {
         super(pos);
         this.partitionBegin = partitionBegin;
         this.partitionEnd = partitionEnd;
         this.step = step;
         this.timeUnit = timeUnit;
+        this.ifNotExists = ifNotExists;
     }
 
     public String getPartitionBegin() {
@@ -86,6 +93,10 @@ public class MultiRangePartitionDesc extends PartitionDesc {
 
     public String getTimeUnit() {
         return timeUnit;
+    }
+
+    public boolean isIfNotExists() {
+        return ifNotExists;
     }
 
     public List<SingleRangePartitionDesc> convertToSingle(PartitionConvertContext context) throws AnalysisException {
@@ -251,7 +262,7 @@ public class MultiRangePartitionDesc extends PartitionDesc {
             PartitionKeyDesc partitionKeyDesc = new PartitionKeyDesc(Lists.newArrayList(lowerPartitionValue),
                     Lists.newArrayList(upperPartitionValue));
             // properties are from table, do not use in new SingleRangePartitionDesc.
-            SingleRangePartitionDesc singleRangePartitionDesc = new SingleRangePartitionDesc(false,
+            SingleRangePartitionDesc singleRangePartitionDesc = new SingleRangePartitionDesc(this.ifNotExists,
                     partitionName, partitionKeyDesc, null);
             singleRangePartitionDescs.add(singleRangePartitionDesc);
 
@@ -299,7 +310,7 @@ public class MultiRangePartitionDesc extends PartitionDesc {
             PartitionKeyDesc partitionKeyDesc = new PartitionKeyDesc(Lists.newArrayList(lowerPartitionValue),
                     Lists.newArrayList(upperPartitionValue));
             // properties are from table, do not use in new SingleRangePartitionDesc.
-            SingleRangePartitionDesc singleRangePartitionDesc = new SingleRangePartitionDesc(false,
+            SingleRangePartitionDesc singleRangePartitionDesc = new SingleRangePartitionDesc(this.ifNotExists,
                     partitionName, partitionKeyDesc, null);
             singleRangePartitionDescs.add(singleRangePartitionDesc);
 
